@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block titulo %}Buscar na internet - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Buscar na Open Library</h1>
+    <a href="{{ url_for('admin_livros') }}">voltar ao acervo</a>
+</div>
+
+<form class="busca busca-pequena" method="get">
+    <input type="text" name="q" value="{{ busca }}" placeholder="Título do livro..." required>
+    <button class="botao" type="submit">Pesquisar</button>
+</form>
+
+{% if busca and not resultados %}
+    <p class="vazio">Nenhum resultado encontrado.</p>
+{% endif %}
+
+{% if resultados %}
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>Título</th><th>Autor</th><th>Ano</th><th>Cadastrar com preço e estoque</th></tr>
+        </thead>
+        <tbody>
+            {% for r in resultados %}
+            <tr>
+                <td>
+                    <strong>{{ r['titulo'] }}</strong>
+                    {% if r['publico'] %}<span class="etiqueta etiqueta-ativo">domínio público</span>{% endif %}
+                </td>
+                <td>{{ r['autor'] }}</td>
+                <td>{{ r['ano'] or '-' }}</td>
+                <td>
+                    <form class="form-linha" method="post">
+                        <input type="hidden" name="q" value="{{ busca }}">
+                        <input type="hidden" name="titulo" value="{{ r['titulo'] }}">
+                        <input type="hidden" name="autor" value="{{ r['autor'] }}">
+                        <input type="hidden" name="ano" value="{{ r['ano'] or '' }}">
+                        <input type="text" name="preco" placeholder="R$" size="7" required>
+                        <input type="number" name="estoque" value="1" min="0" style="width: 4.5em" required>
+                        <button class="botao botao-pequeno" type="submit">Adicionar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

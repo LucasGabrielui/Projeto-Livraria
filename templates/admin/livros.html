@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block titulo %}Acervo - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Acervo</h1>
+    <a class="botao botao-contorno" href="{{ url_for('buscar_internet') }}">Buscar livro na internet</a>
+</div>
+
+<details class="painel-form">
+    <summary>Cadastrar livro manualmente</summary>
+    <form method="post" class="grade-form">
+        <label class="campo-inteiro">Título
+            <input type="text" name="titulo" required>
+        </label>
+        <label class="campo-inteiro">Autor
+            <input type="text" name="autor" required>
+        </label>
+        <label>Ano
+            <input type="number" name="ano">
+        </label>
+        <label>Preço (R$)
+            <input type="text" name="preco" placeholder="49,90" required>
+        </label>
+        <label>Estoque
+            <input type="number" name="estoque" min="0" value="1" required>
+        </label>
+        <button class="botao" type="submit">Cadastrar</button>
+    </form>
+</details>
+
+<form class="busca busca-pequena" method="get">
+    <input type="text" name="q" value="{{ busca }}" placeholder="Procurar por título ou autor...">
+    <button class="botao" type="submit">Buscar</button>
+</form>
+
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>ID</th><th>Título</th><th>Autor</th><th>Ano</th><th>Preço / Estoque</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for l in livros %}
+            <tr>
+                <td>{{ l['id'] }}</td>
+                <td><strong>{{ l['titulo'] }}</strong></td>
+                <td>{{ l['autor'] }}</td>
+                <td>{{ l['ano'] or '-' }}</td>
+                <td>
+                    <form class="form-linha" method="post" action="{{ url_for('editar_livro', id_livro=l['id']) }}">
+                        <input type="hidden" name="q" value="{{ busca }}">
+                        <input type="text" name="preco" value="{{ '%.2f'|format(l['preco'] or 0) }}" size="7">
+                        <input type="number" name="estoque" value="{{ l['estoque'] }}" min="0" style="width: 4.5em">
+                        <button class="botao botao-pequeno" type="submit">Salvar</button>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" action="{{ url_for('remover_livro', id_livro=l['id']) }}"
+                          onsubmit="return confirm('Remover {{ l['titulo']|replace("'", "") }}?')">
+                        <button class="botao-texto" type="submit">Remover</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="vazio">Nenhum livro encontrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

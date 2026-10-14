@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}Livraria Entrelinhas{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
+</head>
+<body class="{% block classe_body %}{% endblock %}">
+    <header class="topo">
+        <div class="topo-conteudo">
+            <a class="logo" href="{{ url_for('painel') if tipo == 'funcionario' else url_for('inicio') }}">
+                <span class="logo-icone">&#10087;</span>
+                <span>
+                    <strong>Entrelinhas</strong>
+                    <small>livraria &amp; aluguel de livros</small>
+                </span>
+            </a>
+            <nav class="menu">
+                {% if tipo == 'funcionario' %}
+                    <a href="{{ url_for('painel') }}">Painel</a>
+                    <a href="{{ url_for('admin_livros') }}">Acervo</a>
+                    <a href="{{ url_for('admin_alugueis') }}">Aluguéis</a>
+                    <a href="{{ url_for('admin_clientes') }}">Clientes</a>
+                    {% if cargo == 'gerente' %}
+                        <a href="{{ url_for('admin_funcionarios') }}">Funcionários</a>
+                    {% endif %}
+                    <span class="menu-usuario">{{ nome_logado }} &middot; {{ cargo }}</span>
+                    <a class="menu-sair" href="{{ url_for('sair') }}">Sair</a>
+                {% elif tipo == 'cliente' %}
+                    <a href="{{ url_for('inicio') }}">Catálogo</a>
+                    <a href="{{ url_for('minha_estante') }}">Minha estante</a>
+                    <span class="menu-usuario">Olá, {{ nome_logado.split()[0] }}</span>
+                    <a class="menu-sair" href="{{ url_for('sair') }}">Sair</a>
+                {% else %}
+                    <a href="{{ url_for('inicio') }}">Catálogo</a>
+                    <a href="{{ url_for('login') }}">Entrar</a>
+                    <a class="menu-destaque" href="{{ url_for('cadastro') }}">Criar conta</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="conteudo">
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% for categoria, msg in mensagens %}
+                <div class="alerta alerta-{{ categoria }}">{{ msg }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        {% block conteudo %}{% endblock %}
+    </main>
+
+    <footer class="rodape">
+        <p>Livraria Entrelinhas &middot; aluguel de qualquer título por {{ valor_semana|moeda }} a semana</p>
+        {% if tipo != 'funcionario' %}
+            <a href="{{ url_for('admin_login') }}">Acesso de funcionários</a>
+        {% endif %}
+    </footer>
+</body>
+</html>

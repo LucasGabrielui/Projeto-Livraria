@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block titulo %}Minha estante - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Minha estante</h1>
+    <a class="botao botao-contorno" href="{{ url_for('inicio') }}">Alugar outro livro</a>
+</div>
+
+<h2 class="subtitulo">Com você agora</h2>
+{% if not ativos %}
+    <p class="vazio">Você não está com nenhum livro no momento.</p>
+{% else %}
+<div class="cartoes">
+    {% for a in ativos %}
+    <div class="cartao-aluguel {% if a['atrasado'] %}cartao-atrasado{% endif %}">
+        <div class="capa capa-mini capa-{{ a['livro_id'] % 7 }}"></div>
+        <div>
+            <h3>{{ a['titulo'] }}</h3>
+            <p class="livro-autor">{{ a['autor'] }}</p>
+            <p>Alugado em {{ a['data_inicio']|data }} por {{ a['semanas'] }} semana(s) &middot; {{ a['valor']|moeda }}</p>
+            <p>Devolver até <strong>{{ a['data_prevista']|data }}</strong></p>
+            {% if a['atrasado'] %}
+                <span class="etiqueta etiqueta-atrasado">Atrasado &middot; acréscimo de {{ a['multa']|moeda }}</span>
+            {% else %}
+                <span class="etiqueta etiqueta-ativo">Em dia</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<h2 class="subtitulo">Histórico</h2>
+{% if not historico %}
+    <p class="vazio">Nenhum livro devolvido ainda.</p>
+{% else %}
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>Livro</th><th>Retirada</th><th>Devolução</th><th>Semanas</th><th>Total pago</th></tr>
+        </thead>
+        <tbody>
+            {% for a in historico %}
+            <tr>
+                <td>{{ a['titulo'] }}</td>
+                <td>{{ a['data_inicio']|data }}</td>
+                <td>{{ a['data_devolucao']|data }}</td>
+                <td>{{ a['semanas'] }}</td>
+                <td>{{ a['valor']|moeda }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block titulo %}Clientes - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Clientes</h1>
+</div>
+
+<details class="painel-form">
+    <summary>Cadastrar cliente no balcão</summary>
+    <form method="post" class="grade-form">
+        <label class="campo-inteiro">Nome
+            <input type="text" name="nome" required>
+        </label>
+        <label>CPF
+            <input type="text" name="cpf" required>
+        </label>
+        <label>Telefone
+            <input type="text" name="telefone">
+        </label>
+        <label>Email
+            <input type="email" name="email" required>
+        </label>
+        <label>Cidade
+            <input type="text" name="cidade">
+        </label>
+        <label>Senha inicial
+            <input type="text" name="senha" required>
+        </label>
+        <button class="botao" type="submit">Cadastrar</button>
+    </form>
+</details>
+
+<form class="busca busca-pequena" method="get">
+    <input type="text" name="q" value="{{ busca }}" placeholder="Nome, CPF ou email...">
+    <button class="botao" type="submit">Buscar</button>
+</form>
+
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>Nome</th><th>CPF</th><th>Email</th><th>Telefone</th><th>Cidade</th><th>Livros com ele</th></tr>
+        </thead>
+        <tbody>
+            {% for c in clientes %}
+            <tr>
+                <td><strong>{{ c['nome'] }}</strong></td>
+                <td>{{ c['cpf'] }}</td>
+                <td>{{ c['email'] or '-' }}</td>
+                <td>{{ c['telefone'] or '-' }}</td>
+                <td>{{ c['cidade'] or '-' }}</td>
+                <td>{{ c['ativos'] }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="vazio">Nenhum cliente encontrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

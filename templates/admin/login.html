@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block titulo %}Acesso restrito - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="ficha ficha-admin">
+    <div class="ficha-cabecalho">
+        <span>Uso interno</span>
+        <h1>Acesso de funcionários</h1>
+    </div>
+    <form method="post">
+        <label>Usuário
+            <input type="text" name="usuario" value="{{ usuario }}" required autofocus>
+        </label>
+        <label>Senha
+            <input type="password" name="senha" required>
+        </label>
+        <button class="botao botao-cheio" type="submit">Entrar no sistema</button>
+    </form>
+    <p class="ficha-rodape">É cliente? <a href="{{ url_for('login') }}">Entre por aqui</a></p>
+</div>
+{% endblock %}

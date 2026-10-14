@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block titulo %}Painel - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Painel</h1>
+</div>
+
+<div class="numeros">
+    <div class="numero">
+        <span>Títulos no acervo</span>
+        <strong>{{ dados['titulos'] }}</strong>
+    </div>
+    <div class="numero">
+        <span>Exemplares na loja</span>
+        <strong>{{ dados['exemplares'] }}</strong>
+    </div>
+    <div class="numero">
+        <span>Clientes</span>
+        <strong>{{ dados['clientes'] }}</strong>
+    </div>
+    <div class="numero">
+        <span>Aluguéis ativos</span>
+        <strong>{{ dados['ativos'] }}</strong>
+    </div>
+    <div class="numero">
+        <span>Faturado com aluguéis</span>
+        <strong>{{ dados['faturamento']|moeda }}</strong>
+    </div>
+</div>
+
+<h2 class="subtitulo">Devoluções atrasadas</h2>
+{% if not atrasados %}
+    <p class="vazio">Nenhum livro atrasado.</p>
+{% else %}
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>Cliente</th><th>Livro</th><th>Deveria voltar em</th><th>Acréscimo</th></tr>
+        </thead>
+        <tbody>
+            {% for a in atrasados %}
+            <tr>
+                <td>{{ a['cliente'] }}</td>
+                <td>{{ a['titulo'] }}</td>
+                <td>{{ a['data_prevista']|data }}</td>
+                <td><span class="etiqueta etiqueta-atrasado">{{ a['multa']|moeda }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

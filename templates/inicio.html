@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<section class="destaque">
+    <p class="destaque-sobre">Clássicos e contemporâneos</p>
+    <h1>Leve um livro para casa por <span>{{ valor_semana|moeda }}</span> a semana</h1>
+    <p>Escolha o título, defina quantas semanas quer ficar com ele e retire na loja.</p>
+    <form class="busca" method="get" action="{{ url_for('inicio') }}">
+        <input type="text" name="q" value="{{ busca }}" placeholder="Procure por título ou autor...">
+        <button class="botao" type="submit">Buscar</button>
+    </form>
+</section>
+
+<div class="secao-titulo">
+    <h2>{% if busca %}Resultados para "{{ busca }}"{% else %}Nosso acervo{% endif %}</h2>
+    {% if busca %}<a href="{{ url_for('inicio') }}">ver todos</a>{% endif %}
+</div>
+
+{% if not livros %}
+    <p class="vazio">Nenhum livro encontrado.</p>
+{% endif %}
+
+<div class="estante">
+    {% for l in livros %}
+    <article class="livro">
+        <div class="capa capa-{{ l['id'] % 7 }}">
+            <span class="capa-titulo">{{ l['titulo'] }}</span>
+            <span class="capa-autor">{{ l['autor'] }}</span>
+        </div>
+        <div class="livro-info">
+            <h3>{{ l['titulo'] }}</h3>
+            <p class="livro-autor">{{ l['autor'] }}{% if l['ano'] %}, {{ l['ano'] }}{% endif %}</p>
+            <p class="livro-preco">Preço de capa: {{ (l['preco'] or 0)|moeda }}</p>
+            {% if l['estoque'] > 0 %}
+                <p class="disponivel">{{ l['estoque'] }} disponível(is)</p>
+                {% if tipo == 'cliente' %}
+                <form class="form-alugar" method="post" action="{{ url_for('alugar', id_livro=l['id']) }}">
+                    <select name="semanas">
+                        {% for s in range(1, max_semanas + 1) %}
+                            <option value="{{ s }}">{{ s }} semana{{ 's' if s > 1 }} &middot; {{ (s * valor_semana)|moeda }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="botao botao-pequeno" type="submit">Alugar</button>
+                </form>
+                {% elif tipo != 'funcionario' %}
+                <a class="botao botao-contorno botao-pequeno" href="{{ url_for('login') }}">Entre para alugar</a>
+                {% endif %}
+            {% else %}
+                <p class="indisponivel">Todos os exemplares alugados</p>
+            {% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% endblock %}
