@@ -1,4 +1,5 @@
 import os
+import math
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import banco
@@ -69,6 +70,18 @@ def so_gerente(func):
     return verificar
 
 
+def so_estoque(func):
+    @wraps(func)
+    def verificar(*args, **kwargs):
+        if session.get("tipo") != "funcionario":
+            return redirect(url_for("admin_login"))
+        if session.get("cargo") not in ["gerente", "estoquista"]:
+            flash("Só o gerente e o estoquista podem acessar essa parte.", "erro")
+            return redirect(url_for("painel"))
+        return func(*args, **kwargs)
+    return verificar
+
+
 def ler_int(texto, padrao=None):
     try:
         return int(texto)
@@ -88,6 +101,34 @@ def limpar_cpf(texto):
     if len(cpf) != 11:
         return None
     return cpf
+
+
+def so_numeros(texto, tamanho):
+    numeros = "".join(c for c in texto if c.isdigit())
+    if len(numeros) != tamanho:
+        return None
+    return numeros
+
+
+# so aceita link de site, pra ninguem colocar javascript no lugar
+def ler_link(texto):
+    link = (texto or "").strip()
+    if link == "":
+        return None
+    if not link.startswith(("https://", "http://")):
+        return False
+    return link
+
+
+def prazo_texto(horas):
+    if horas is None:
+        return "indisponível"
+    if horas < 24:
+        return f"cerca de {max(1, round(horas))} hora(s)"
+    return f"cerca de {math.ceil(horas / 24)} dia(s)"
+
+
+app.jinja_env.filters["prazo"] = prazo_texto
 
 
 # area do cliente
@@ -160,11 +201,15 @@ def sair():
 @so_cliente
 def alugar(id_livro):
     semanas = ler_int(request.form.get("semanas"), 1)
-    erro = banco.alugar_livro(session["id"], id_livro, semanas)
+    tipo = request.form.get("tipo", "loja")
+    erro = banco.alugar_livro(session["id"], id_livro, semanas, tipo)
     if erro:
         flash(erro, "erro")
         return redirect(url_for("inicio"))
-    flash(f"Livro alugado por {semanas} semana(s). Total: {moeda(semanas * banco.VALOR_SEMANA)}.", "sucesso")
+    if tipo == "online":
+        flash(f"E-book liberado por {semanas} semana(s). Total: {moeda(semanas * banco.VALOR_SEMANA)}. É só clicar em Ler agora.", "sucesso")
+    else:
+        flash(f"Livro reservado por {semanas} semana(s). Total: {moeda(semanas * banco.VALOR_SEMANA)}. Retire na loja.", "sucesso")
     return redirect(url_for("minha_estante"))
 
 
@@ -175,6 +220,85 @@ def minha_estante():
     ativos = [a for a in alugueis if a["data_devolucao"] is None]
     historico = [a for a in alugueis if a["data_devolucao"] is not None]
     return render_template("minha_estante.html", ativos=ativos, historico=historico)
+
+
+@app.route("/livro/<int:id_livro>/comprar", methods=["GET", "POST"])
+@so_cliente
+def comprar(id_livro):
+    livro = banco.buscar_livro_id(id_livro)
+    if livro is None:
+        flash("Livro não encontrado.", "erro")
+        return redirect(url_for("inicio"))
+
+    calculo = None
+    if request.method == "POST" and request.form.get("acao") == "confirmar":
+        compra = session.get("compra")
+        if compra is None or compra["livro"] != id_livro:
+            flash("Calcule o prazo antes de confirmar.", "erro")
+            return redirect(url_for("comprar", id_livro=id_livro))
+        erro = banco.registrar_pedido(session["id"], id_livro, compra["cep"], compra["endereco"], compra["km"])
+        session.pop("compra", None)
+        if erro:
+            flash(erro, "erro")
+            return redirect(url_for("inicio"))
+        flash("Compra confirmada! Acompanhe a entrega em Meus pedidos.", "sucesso")
+        return redirect(url_for("meus_pedidos"))
+
+    if request.method == "POST":
+        cep = so_numeros(request.form.get("cep", ""), 8)
+        numero = request.form.get("numero", "").strip()
+        complemento = request.form.get("complemento", "").strip()
+        if cep is None:
+            flash("CEP inválido, precisa ter 8 dígitos.", "erro")
+        elif numero == "":
+            flash("Informe o número da casa.", "erro")
+        else:
+            local = busca_web.distancia_ate_sede(cep)
+            if local == {}:
+                flash("CEP não encontrado.", "erro")
+            else:
+                if local is None:
+                    flash("Sem conexão com o serviço de mapas, o prazo não pôde ser calculado.", "aviso")
+                    local = {"km": None, "endereco": f"CEP {cep[:5]}-{cep[5:]}"}
+                endereco = local["endereco"] + ", nº " + numero
+                if complemento:
+                    endereco += " - " + complemento
+                calculo = banco.calcular_prazo(id_livro, local["km"])
+                if calculo["erro"]:
+                    flash(calculo["erro"], "erro")
+                    return redirect(url_for("inicio"))
+                calculo["km"] = local["km"]
+                calculo["endereco"] = endereco
+                session["compra"] = {"livro": id_livro, "cep": cep, "endereco": endereco, "km": local["km"]}
+
+    return render_template("comprar.html", livro=livro, calculo=calculo, form=request.form,
+                           velocidades=banco.VEICULOS, separacao=banco.HORAS_SEPARACAO)
+
+
+@app.route("/meus-pedidos")
+@so_cliente
+def meus_pedidos():
+    return render_template("meus_pedidos.html", pedidos=banco.listar_pedidos(id_cliente=session["id"]))
+
+
+@app.route("/parcerias", methods=["GET", "POST"])
+def parcerias():
+    form = request.form
+    if request.method == "POST":
+        tipo = form.get("tipo", "")
+        nome = form.get("nome", "").strip()
+        email = form.get("email", "").strip()
+        proposta = form.get("proposta", "").strip()
+        if tipo not in ["livraria", "autor"]:
+            flash("Escolha se é livraria ou autor.", "erro")
+        elif nome == "" or email == "" or proposta == "":
+            flash("Preencha nome, email e a proposta.", "erro")
+        else:
+            banco.cadastrar_parceria(tipo, nome, email, form.get("telefone", "").strip(),
+                                     form.get("cidade", "").strip(), proposta)
+            flash("Proposta enviada! Nossa equipe vai entrar em contato.", "sucesso")
+            return redirect(url_for("parcerias"))
+    return render_template("parcerias.html", form=form)
 
 
 # area administrativa
@@ -212,11 +336,14 @@ def admin_livros():
         ano = ler_int(request.form.get("ano"))
         preco = ler_float(request.form.get("preco"))
         estoque = ler_int(request.form.get("estoque"))
+        ebook = ler_link(request.form.get("ebook"))
         if titulo == "" or autor == "":
             flash("Título e autor são obrigatórios.", "erro")
         elif preco is None or preco < 0 or estoque is None or estoque < 0:
             flash("Preço e estoque precisam ser números positivos.", "erro")
-        elif banco.adicionar_livro(titulo, autor, ano, preco, estoque):
+        elif ebook is False:
+            flash("O link do e-book precisa começar com https://", "erro")
+        elif banco.adicionar_livro(titulo, autor, ano, preco, estoque, ebook=ebook):
             flash(f"'{titulo}' cadastrado!", "sucesso")
         else:
             flash("Esse livro já está cadastrado.", "erro")
@@ -224,7 +351,7 @@ def admin_livros():
 
     busca = request.args.get("q", "").strip()
     livros = banco.procurar_livros(busca) if busca else banco.listar_livros()
-    return render_template("admin/livros.html", livros=livros, busca=busca)
+    return render_template("admin/livros.html", livros=livros, busca=busca, fornecedores=banco.listar_fornecedores())
 
 
 @app.route("/admin/livros/<int:id_livro>/editar", methods=["POST"])
@@ -232,9 +359,13 @@ def admin_livros():
 def editar_livro(id_livro):
     preco = ler_float(request.form.get("preco"))
     estoque = ler_int(request.form.get("estoque"))
+    fornecedor = ler_int(request.form.get("fornecedor"))
+    ebook = ler_link(request.form.get("ebook"))
     if preco is None or preco < 0 or estoque is None or estoque < 0:
         flash("Valores inválidos.", "erro")
-    elif banco.editar_livro(id_livro, preco, estoque):
+    elif ebook is False:
+        flash("O link do e-book precisa começar com https://", "erro")
+    elif banco.editar_livro(id_livro, preco, estoque, fornecedor, ebook):
         flash("Livro atualizado!", "sucesso")
     return redirect(url_for("admin_livros", q=request.form.get("q", "")))
 
@@ -259,7 +390,8 @@ def buscar_internet():
         estoque = ler_int(request.form.get("estoque"))
         if preco is None or preco < 0 or estoque is None or estoque < 0:
             flash("Informe preço e estoque válidos.", "erro")
-        elif banco.adicionar_livro(titulo, autor, ler_int(request.form.get("ano")), preco, estoque):
+        elif banco.adicionar_livro(titulo, autor, ler_int(request.form.get("ano")), preco, estoque,
+                                   ler_int(request.form.get("capa"))):
             flash(f"'{titulo}' cadastrado!", "sucesso")
         else:
             flash("Esse livro já está cadastrado.", "erro")
@@ -343,6 +475,102 @@ def admin_funcionarios():
         return redirect(url_for("admin_funcionarios"))
 
     return render_template("admin/funcionarios.html", funcionarios=banco.listar_funcionarios(), cargos=CARGOS)
+
+
+@app.route("/admin/entregas")
+@so_funcionario
+def admin_entregas():
+    return render_template("admin/entregas.html", pedidos=banco.listar_pedidos(), status=banco.STATUS_PEDIDO)
+
+
+@app.route("/admin/entregas/<int:id_pedido>/status", methods=["POST"])
+@so_funcionario
+def status_entrega(id_pedido):
+    status = request.form.get("status", "")
+    if status in banco.STATUS_PEDIDO and banco.mudar_status_pedido(id_pedido, status):
+        flash("Situação da entrega atualizada!", "sucesso")
+    else:
+        flash("Situação inválida.", "erro")
+    return redirect(url_for("admin_entregas"))
+
+
+@app.route("/admin/fornecedores", methods=["GET", "POST"])
+@so_estoque
+def admin_fornecedores():
+    if request.method == "POST":
+        form = request.form
+        nome = form.get("nome", "").strip()
+        cnpj = so_numeros(form.get("cnpj", ""), 14)
+        cep = so_numeros(form.get("cep", ""), 8)
+        veiculo = form.get("veiculo", "")
+        distancia = ler_float(form.get("distancia"))
+        cidade = form.get("cidade", "").strip()
+        if nome == "":
+            flash("Nome é obrigatório.", "erro")
+        elif cnpj is None:
+            flash("CNPJ inválido, precisa ter 14 dígitos.", "erro")
+        elif cep is None:
+            flash("CEP inválido, precisa ter 8 dígitos.", "erro")
+        elif veiculo not in banco.VEICULOS:
+            flash("Veículo inválido.", "erro")
+        else:
+            # se nao digitou a distancia tenta calcular pelo cep
+            if distancia is None:
+                local = busca_web.distancia_ate_sede(cep)
+                if local:
+                    distancia = local["km"]
+                    cidade = local["cidade"]
+            if distancia is None or distancia < 0:
+                flash("Não deu pra calcular a distância pelo CEP. Digite a distância em km.", "erro")
+            elif banco.cadastrar_fornecedor(nome, cnpj, form.get("telefone", "").strip(), cep, cidade, distancia, veiculo):
+                flash(f"Fornecedor cadastrado! Fica a {distancia:.0f} km da sede.", "sucesso")
+            else:
+                flash("Já existe um fornecedor com esse CNPJ.", "erro")
+        return redirect(url_for("admin_fornecedores"))
+
+    return render_template("admin/fornecedores.html", fornecedores=banco.listar_fornecedores(),
+                           veiculos=banco.VEICULOS)
+
+
+@app.route("/admin/entregadores", methods=["GET", "POST"])
+@so_estoque
+def admin_entregadores():
+    if request.method == "POST":
+        form = request.form
+        nome = form.get("nome", "").strip()
+        cpf = limpar_cpf(form.get("cpf", ""))
+        veiculo = form.get("veiculo", "")
+        if nome == "":
+            flash("Nome é obrigatório.", "erro")
+        elif cpf is None:
+            flash("CPF inválido, precisa ter 11 dígitos.", "erro")
+        elif veiculo not in banco.VEICULOS:
+            flash("Veículo inválido.", "erro")
+        elif banco.cadastrar_entregador(nome, cpf, form.get("telefone", "").strip(), veiculo,
+                                        form.get("placa", "").strip().upper()):
+            flash("Entregador cadastrado!", "sucesso")
+        else:
+            flash("Já existe um entregador com esse CPF.", "erro")
+        return redirect(url_for("admin_entregadores"))
+
+    return render_template("admin/entregadores.html", entregadores=banco.listar_entregadores(),
+                           veiculos=banco.VEICULOS)
+
+
+@app.route("/admin/parcerias")
+@so_estoque
+def admin_parcerias():
+    return render_template("admin/parcerias.html", parcerias=banco.listar_parcerias())
+
+
+@app.route("/admin/parcerias/<int:id_parceria>/status", methods=["POST"])
+@so_estoque
+def status_parceria(id_parceria):
+    status = request.form.get("status", "")
+    if status in ["aprovada", "recusada"]:
+        banco.mudar_status_parceria(id_parceria, status)
+        flash(f"Parceria {status}.", "sucesso")
+    return redirect(url_for("admin_parcerias"))
 
 
 banco.criar_tabelas()

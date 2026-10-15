@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block titulo %}Entregadores - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Entregadores</h1>
+</div>
+
+<details class="painel-form">
+    <summary>Cadastrar entregador</summary>
+    <form method="post" class="grade-form">
+        <label class="campo-inteiro">Nome
+            <input type="text" name="nome" required>
+        </label>
+        <label>CPF
+            <input type="text" name="cpf" required>
+        </label>
+        <label>Telefone
+            <input type="text" name="telefone">
+        </label>
+        <label>Veículo
+            <select name="veiculo">
+                {% for v in veiculos %}
+                    <option value="{{ v }}">{{ v|capitalize }} ({{ veiculos[v] }} km/h)</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Placa
+            <input type="text" name="placa" placeholder="se tiver">
+        </label>
+        <button class="botao" type="submit">Cadastrar</button>
+    </form>
+</details>
+
+<p class="nota">Cada compra vai para o entregador com menos entregas em aberto.</p>
+
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Veículo</th><th>Placa</th><th>Entregas em aberto</th></tr>
+        </thead>
+        <tbody>
+            {% for e in entregadores %}
+            <tr>
+                <td><strong>{{ e['nome'] }}</strong></td>
+                <td>{{ e['cpf'] }}</td>
+                <td>{{ e['telefone'] or '-' }}</td>
+                <td>{{ e['veiculo']|capitalize }}</td>
+                <td>{{ e['placa'] or '-' }}</td>
+                <td>{{ e['abertos'] }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="vazio">Nenhum entregador cadastrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

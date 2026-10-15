@@ -15,7 +15,7 @@
                 <span class="logo-icone">&#10087;</span>
                 <span>
                     <strong>Entrelinhas</strong>
-                    <small>livraria &amp; aluguel de livros</small>
+                    <small>livraria, aluguel &amp; entrega de livros</small>
                 </span>
             </a>
             <nav class="menu">
@@ -23,7 +23,13 @@
                     <a href="{{ url_for('painel') }}">Painel</a>
                     <a href="{{ url_for('admin_livros') }}">Acervo</a>
                     <a href="{{ url_for('admin_alugueis') }}">Aluguéis</a>
+                    <a href="{{ url_for('admin_entregas') }}">Entregas</a>
                     <a href="{{ url_for('admin_clientes') }}">Clientes</a>
+                    {% if cargo in ['gerente', 'estoquista'] %}
+                        <a href="{{ url_for('admin_fornecedores') }}">Fornecedores</a>
+                        <a href="{{ url_for('admin_entregadores') }}">Entregadores</a>
+                        <a href="{{ url_for('admin_parcerias') }}">Parcerias</a>
+                    {% endif %}
                     {% if cargo == 'gerente' %}
                         <a href="{{ url_for('admin_funcionarios') }}">Funcionários</a>
                     {% endif %}
@@ -32,10 +38,13 @@
                 {% elif tipo == 'cliente' %}
                     <a href="{{ url_for('inicio') }}">Catálogo</a>
                     <a href="{{ url_for('minha_estante') }}">Minha estante</a>
+                    <a href="{{ url_for('meus_pedidos') }}">Meus pedidos</a>
+                    <a href="{{ url_for('parcerias') }}">Parcerias</a>
                     <span class="menu-usuario">Olá, {{ nome_logado.split()[0] }}</span>
                     <a class="menu-sair" href="{{ url_for('sair') }}">Sair</a>
                 {% else %}
                     <a href="{{ url_for('inicio') }}">Catálogo</a>
+                    <a href="{{ url_for('parcerias') }}">Parcerias</a>
                     <a href="{{ url_for('login') }}">Entrar</a>
                     <a class="menu-destaque" href="{{ url_for('cadastro') }}">Criar conta</a>
                 {% endif %}

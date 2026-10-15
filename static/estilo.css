@@ -260,7 +260,7 @@ a {
 
 /* formularios */
 
-input, select {
+input, select, textarea {
     font-family: inherit;
     font-size: 15px;
     padding: 9px 11px;
@@ -270,7 +270,7 @@ input, select {
     color: var(--tinta);
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--dourado);
     box-shadow: 0 0 0 3px rgba(193, 154, 75, 0.25);
@@ -301,7 +301,7 @@ label {
     align-items: center;
 }
 
-.form-linha input {
+.form-linha input, .form-linha select {
     padding: 6px 8px;
     font-size: 14px;
 }
@@ -465,6 +465,67 @@ label {
 
 .capa-mini::before {
     inset: 6px 6px 6px 10px;
+}
+
+/* capa de verdade por cima da desenhada, se nao carregar fica a desenhada */
+.capa-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
+.capa-lista {
+    width: 34px;
+    vertical-align: middle;
+    margin-right: 8px;
+    border-radius: 2px;
+}
+
+.botao-comprar {
+    display: inline-block;
+    margin-top: 8px;
+}
+
+/* compra */
+
+.compra {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 34px;
+    align-items: start;
+}
+
+.compra-preco {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 28px;
+    color: var(--vinho);
+    margin: 4px 0;
+}
+
+.compra .grade-form {
+    margin-top: 18px;
+}
+
+.prazo {
+    margin-top: 22px;
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-left: 4px solid var(--verde);
+    border-radius: 6px;
+    padding: 16px 20px;
+}
+
+.prazo ul {
+    margin: 8px 0;
+    padding-left: 20px;
+    font-size: 14px;
+}
+
+.prazo-total {
+    font-size: 18px;
 }
 
 .livro-info {
@@ -745,5 +806,13 @@ label {
 
     .cartoes {
         grid-template-columns: 1fr;
+    }
+
+    .compra {
+        grid-template-columns: 1fr;
+    }
+
+    .compra .capa {
+        max-width: 180px;
     }
 }

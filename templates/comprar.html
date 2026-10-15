@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block titulo %}Comprar - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Comprar com entrega</h1>
+    <a href="{{ url_for('inicio') }}">voltar ao catálogo</a>
+</div>
+
+<div class="compra">
+    <div class="capa capa-{{ livro['id'] % 7 }}">
+        <span class="capa-titulo">{{ livro['titulo'] }}</span>
+        <span class="capa-autor">{{ livro['autor'] }}</span>
+        {% if livro['capa'] %}
+        <img class="capa-img" src="https://covers.openlibrary.org/b/id/{{ livro['capa'] }}-M.jpg?default=false"
+             alt="Capa de {{ livro['titulo'] }}" onerror="this.remove()">
+        {% endif %}
+    </div>
+
+    <div>
+        <h2>{{ livro['titulo'] }}</h2>
+        <p class="livro-autor">{{ livro['autor'] }}{% if livro['ano'] %}, {{ livro['ano'] }}{% endif %}</p>
+        <p class="compra-preco">{{ (livro['preco'] or 0)|moeda }}</p>
+        {% if livro['estoque'] > 0 %}
+            <p class="disponivel">Em estoque na nossa sede</p>
+        {% else %}
+            <p class="indisponivel">Sem estoque na sede, vamos encomendar da distribuidora</p>
+        {% endif %}
+
+        <form method="post" class="grade-form">
+            <input type="hidden" name="acao" value="calcular">
+            <label>CEP
+                <input type="text" name="cep" value="{{ form.get('cep', '') }}" placeholder="00000-000" required>
+            </label>
+            <label>Número
+                <input type="text" name="numero" value="{{ form.get('numero', '') }}" required>
+            </label>
+            <label class="campo-inteiro">Complemento
+                <input type="text" name="complemento" value="{{ form.get('complemento', '') }}" placeholder="apto, bloco...">
+            </label>
+            <button class="botao campo-inteiro" type="submit">Calcular prazo de entrega</button>
+        </form>
+
+        {% if calculo %}
+        <div class="prazo">
+            <p><strong>Entregar em:</strong> {{ calculo['endereco'] }}</p>
+            <ul>
+                <li>Separação do pedido na sede: {{ separacao }} horas</li>
+                {% if calculo['fornecedor'] %}
+                <li>Distribuidora &rarr; sede: {{ calculo['fornecedor']['nome'] }} ({{ calculo['fornecedor']['cidade'] }}),
+                    {{ '%.0f'|format(calculo['fornecedor']['distancia_km']) }} km de {{ calculo['fornecedor']['veiculo'] }}</li>
+                {% endif %}
+                {% if calculo['km'] is not none %}
+                <li>Sede &rarr; sua casa: {{ '%.1f'|format(calculo['km']) }} km de {{ calculo['entregador']['veiculo'] }}
+                    (média de {{ velocidades[calculo['entregador']['veiculo']] }} km/h)</li>
+                {% endif %}
+            </ul>
+            <p class="prazo-total">Tempo médio de entrega: <strong>{{ calculo['horas']|prazo }}</strong></p>
+            <form method="post">
+                <input type="hidden" name="acao" value="confirmar">
+                <button class="botao botao-cheio" type="submit">Confirmar compra &middot; {{ (livro['preco'] or 0)|moeda }}</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

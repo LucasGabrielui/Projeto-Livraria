@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block titulo %}Entregas - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Entregas</h1>
+</div>
+
+<p class="nota">Livros comprados para receber em casa. O prazo conta a separação na sede, o caminho da distribuidora (quando não tem estoque) e a entrega até o cliente.</p>
+
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>#</th><th>Cliente</th><th>Livro</th><th>Endereço</th><th>Entregador</th><th>Previsão</th><th>Situação</th></tr>
+        </thead>
+        <tbody>
+            {% for p in pedidos %}
+            <tr>
+                <td>{{ p['id'] }}</td>
+                <td>{{ p['cliente'] }}</td>
+                <td>
+                    <strong>{{ p['titulo'] }}</strong>
+                    {% if p['fornecedor'] %}<br><small>encomendado de {{ p['fornecedor'] }}</small>{% endif %}
+                </td>
+                <td>
+                    {{ p['endereco'] }}
+                    {% if p['distancia_km'] is not none %}<br><small>{{ '%.1f'|format(p['distancia_km']) }} km da sede</small>{% endif %}
+                </td>
+                <td>{{ p['entregador'] or '-' }}{% if p['veiculo'] %}<br><small>{{ p['veiculo'] }}</small>{% endif %}</td>
+                <td>{{ p['previsao'] or '-' }}<br><small>{{ p['horas_previstas']|prazo }}</small></td>
+                <td>
+                    <form class="form-linha" method="post" action="{{ url_for('status_entrega', id_pedido=p['id']) }}">
+                        <select name="status">
+                            {% for s in status %}
+                                <option value="{{ s }}" {% if s == p['status'] %}selected{% endif %}>{{ s|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="botao botao-pequeno" type="submit">Salvar</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="vazio">Nenhuma compra com entrega ainda.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

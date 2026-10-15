@@ -8,6 +8,8 @@
     <a class="botao botao-contorno" href="{{ url_for('inicio') }}">Alugar outro livro</a>
 </div>
 
+<p class="nota">E-books ficam liberados até o fim do prazo e se encerram sozinhos. Livros físicos são retirados e devolvidos na loja.</p>
+
 <h2 class="subtitulo">Com você agora</h2>
 {% if not ativos %}
     <p class="vazio">Você não está com nenhum livro no momento.</p>
@@ -15,13 +17,27 @@
 <div class="cartoes">
     {% for a in ativos %}
     <div class="cartao-aluguel {% if a['atrasado'] %}cartao-atrasado{% endif %}">
-        <div class="capa capa-mini capa-{{ a['livro_id'] % 7 }}"></div>
+        <div class="capa capa-mini capa-{{ a['livro_id'] % 7 }}">
+            {% if a['capa'] %}
+            <img class="capa-img" src="https://covers.openlibrary.org/b/id/{{ a['capa'] }}-S.jpg?default=false"
+                 alt="" loading="lazy" onerror="this.remove()">
+            {% endif %}
+        </div>
         <div>
             <h3>{{ a['titulo'] }}</h3>
             <p class="livro-autor">{{ a['autor'] }}</p>
             <p>Alugado em {{ a['data_inicio']|data }} por {{ a['semanas'] }} semana(s) &middot; {{ a['valor']|moeda }}</p>
-            <p>Devolver até <strong>{{ a['data_prevista']|data }}</strong></p>
-            {% if a['atrasado'] %}
+            {% if a['tipo'] == 'online' %}
+            <p>Acesso online até <strong>{{ a['data_prevista']|data }}</strong></p>
+            {% if a['ebook'] %}
+                <a class="botao botao-pequeno" href="{{ a['ebook'] }}" target="_blank" rel="noopener">Ler agora</a>
+            {% endif %}
+            {% else %}
+            <p>Retirado na loja &middot; devolver até <strong>{{ a['data_prevista']|data }}</strong></p>
+            {% endif %}
+            {% if a['tipo'] == 'online' %}
+                <span class="etiqueta etiqueta-ativo">E-book</span>
+            {% elif a['atrasado'] %}
                 <span class="etiqueta etiqueta-atrasado">Atrasado &middot; acréscimo de {{ a['multa']|moeda }}</span>
             {% else %}
                 <span class="etiqueta etiqueta-ativo">Em dia</span>
@@ -39,12 +55,13 @@
 <div class="tabela-caixa">
     <table class="tabela">
         <thead>
-            <tr><th>Livro</th><th>Retirada</th><th>Devolução</th><th>Semanas</th><th>Total pago</th></tr>
+            <tr><th>Livro</th><th>Tipo</th><th>Início</th><th>Fim</th><th>Semanas</th><th>Total pago</th></tr>
         </thead>
         <tbody>
             {% for a in historico %}
             <tr>
                 <td>{{ a['titulo'] }}</td>
+                <td>{{ 'E-book' if a['tipo'] == 'online' else 'Loja' }}</td>
                 <td>{{ a['data_inicio']|data }}</td>
                 <td>{{ a['data_devolucao']|data }}</td>
                 <td>{{ a['semanas'] }}</td>

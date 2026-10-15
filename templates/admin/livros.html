@@ -26,6 +26,9 @@
         <label>Estoque
             <input type="number" name="estoque" min="0" value="1" required>
         </label>
+        <label class="campo-inteiro">Link do e-book (opcional, para aluguel online)
+            <input type="text" name="ebook" placeholder="https://www.gutenberg.org/ebooks/...">
+        </label>
         <button class="botao" type="submit">Cadastrar</button>
     </form>
 </details>
@@ -38,7 +41,7 @@
 <div class="tabela-caixa">
     <table class="tabela">
         <thead>
-            <tr><th>ID</th><th>Título</th><th>Autor</th><th>Ano</th><th>Preço / Estoque</th><th></th></tr>
+            <tr><th>ID</th><th>Título</th><th>Autor</th><th>Ano</th><th>Preço / Estoque / Fornecedor / E-book</th><th></th></tr>
         </thead>
         <tbody>
             {% for l in livros %}
@@ -52,6 +55,13 @@
                         <input type="hidden" name="q" value="{{ busca }}">
                         <input type="text" name="preco" value="{{ '%.2f'|format(l['preco'] or 0) }}" size="7">
                         <input type="number" name="estoque" value="{{ l['estoque'] }}" min="0" style="width: 4.5em">
+                        <select name="fornecedor">
+                            <option value="">sem fornecedor</option>
+                            {% for f in fornecedores %}
+                                <option value="{{ f['id'] }}" {% if f['id'] == l['fornecedor_id'] %}selected{% endif %}>{{ f['nome'] }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="ebook" value="{{ l['ebook'] or '' }}" placeholder="link do e-book" size="14">
                         <button class="botao botao-pequeno" type="submit">Salvar</button>
                     </form>
                 </td>

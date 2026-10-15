@@ -28,6 +28,18 @@
         <span>Faturado com aluguéis</span>
         <strong>{{ dados['faturamento']|moeda }}</strong>
     </div>
+    <div class="numero">
+        <span>Entregas em andamento</span>
+        <strong>{{ dados['entregas'] }}</strong>
+    </div>
+    <div class="numero">
+        <span>Faturado com vendas</span>
+        <strong>{{ dados['vendas']|moeda }}</strong>
+    </div>
+    <div class="numero">
+        <span>Parcerias para avaliar</span>
+        <strong>{{ dados['parcerias'] }}</strong>
+    </div>
 </div>
 
 <h2 class="subtitulo">Devoluções atrasadas</h2>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block titulo %}Fornecedores - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Fornecedores</h1>
+</div>
+
+<details class="painel-form">
+    <summary>Cadastrar fornecedor</summary>
+    <form method="post" class="grade-form">
+        <label class="campo-inteiro">Nome da distribuidora
+            <input type="text" name="nome" required>
+        </label>
+        <label>CNPJ
+            <input type="text" name="cnpj" placeholder="00.000.000/0000-00" required>
+        </label>
+        <label>Telefone
+            <input type="text" name="telefone">
+        </label>
+        <label>CEP
+            <input type="text" name="cep" placeholder="00000-000" required>
+        </label>
+        <label>Veículo de entrega
+            <select name="veiculo">
+                {% for v in veiculos %}
+                    <option value="{{ v }}">{{ v|capitalize }} ({{ veiculos[v] }} km/h)</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Cidade
+            <input type="text" name="cidade" placeholder="preenchida pelo CEP">
+        </label>
+        <label>Distância até a sede (km)
+            <input type="text" name="distancia" placeholder="em branco = calcular pelo CEP">
+        </label>
+        <button class="botao" type="submit">Cadastrar</button>
+    </form>
+</details>
+
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>Cidade</th><th>Distância</th><th>Veículo</th><th>Livros</th></tr>
+        </thead>
+        <tbody>
+            {% for f in fornecedores %}
+            <tr>
+                <td><strong>{{ f['nome'] }}</strong></td>
+                <td>{{ f['cnpj'] }}</td>
+                <td>{{ f['telefone'] or '-' }}</td>
+                <td>{{ f['cidade'] or '-' }}</td>
+                <td>{{ '%.0f'|format(f['distancia_km']) }} km</td>
+                <td>{{ f['veiculo']|capitalize }}</td>
+                <td>{{ f['livros'] }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="vazio">Nenhum fornecedor cadastrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

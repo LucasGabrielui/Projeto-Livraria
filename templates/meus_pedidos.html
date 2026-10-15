@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block titulo %}Meus pedidos - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Meus pedidos</h1>
+    <a class="botao botao-contorno" href="{{ url_for('inicio') }}">Comprar outro livro</a>
+</div>
+
+{% if not pedidos %}
+    <p class="vazio">Você ainda não comprou nenhum livro.</p>
+{% else %}
+<div class="cartoes">
+    {% for p in pedidos %}
+    <div class="cartao-aluguel">
+        <div class="capa capa-mini capa-{{ p['livro_id'] % 7 }}">
+            {% if p['capa'] %}
+            <img class="capa-img" src="https://covers.openlibrary.org/b/id/{{ p['capa'] }}-S.jpg?default=false"
+                 alt="" loading="lazy" onerror="this.remove()">
+            {% endif %}
+        </div>
+        <div>
+            <h3>{{ p['titulo'] }}</h3>
+            <p>Pedido #{{ p['id'] }} em {{ p['data_pedido'][:10]|data }} &middot; {{ p['valor']|moeda }}</p>
+            <p>{{ p['endereco'] }}</p>
+            <p>Entregador: {{ p['entregador'] or '-' }}{% if p['veiculo'] %} ({{ p['veiculo'] }}){% endif %}</p>
+            {% if p['status'] == 'entregue' %}
+                <span class="etiqueta etiqueta-devolvido">Entregue</span>
+            {% else %}
+                <p>Previsão: <strong>{{ p['previsao'] or 'a combinar' }}</strong> ({{ p['horas_previstas']|prazo }})</p>
+                <span class="etiqueta etiqueta-ativo">{{ p['status']|capitalize }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block titulo %}Parcerias - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="secao-titulo">
+    <h1>Parcerias</h1>
+    <a href="{{ url_for('parcerias') }}">ver formulário público</a>
+</div>
+
+<div class="tabela-caixa">
+    <table class="tabela">
+        <thead>
+            <tr><th>Data</th><th>Tipo</th><th>Nome</th><th>Contato</th><th>Proposta</th><th>Situação</th></tr>
+        </thead>
+        <tbody>
+            {% for p in parcerias %}
+            <tr>
+                <td>{{ p['data']|data }}</td>
+                <td>{{ p['tipo']|capitalize }}</td>
+                <td><strong>{{ p['nome'] }}</strong>{% if p['cidade'] %}<br><small>{{ p['cidade'] }}</small>{% endif %}</td>
+                <td>{{ p['email'] }}{% if p['telefone'] %}<br><small>{{ p['telefone'] }}</small>{% endif %}</td>
+                <td>{{ p['proposta'] }}</td>
+                <td>
+                    {% if p['status'] == 'pendente' %}
+                    <form class="form-linha" method="post" action="{{ url_for('status_parceria', id_parceria=p['id']) }}">
+                        <button class="botao botao-pequeno" name="status" value="aprovada" type="submit">Aprovar</button>
+                        <button class="botao-texto" name="status" value="recusada" type="submit">Recusar</button>
+                    </form>
+                    {% elif p['status'] == 'aprovada' %}
+                        <span class="etiqueta etiqueta-ativo">Aprovada</span>
+                    {% else %}
+                        <span class="etiqueta etiqueta-devolvido">Recusada</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="vazio">Nenhuma proposta recebida.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

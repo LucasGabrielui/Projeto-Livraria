@@ -11,24 +11,27 @@
     </div>
 </div>
 
-<p class="nota">Valor fixo de {{ valor_semana|moeda }} por semana. Atrasos cobram uma semana a mais a cada 7 dias (ou fração).</p>
+<p class="nota">Valor fixo de {{ valor_semana|moeda }} por semana. Atrasos de livros da loja cobram uma semana a mais a cada 7 dias (ou fração). E-books se encerram sozinhos no fim do prazo.</p>
 
 <div class="tabela-caixa">
     <table class="tabela">
         <thead>
-            <tr><th>Cliente</th><th>Livro</th><th>Retirada</th><th>Prazo</th><th>Valor</th><th>Situação</th><th></th></tr>
+            <tr><th>Cliente</th><th>Livro</th><th>Tipo</th><th>Início</th><th>Prazo</th><th>Valor</th><th>Situação</th><th></th></tr>
         </thead>
         <tbody>
             {% for a in alugueis %}
             <tr>
                 <td>{{ a['cliente'] }}</td>
                 <td><strong>{{ a['titulo'] }}</strong></td>
+                <td>{{ 'E-book' if a['tipo'] == 'online' else 'Loja' }}</td>
                 <td>{{ a['data_inicio']|data }}</td>
                 <td>{{ a['data_prevista']|data }}</td>
                 <td>{{ a['valor']|moeda }}</td>
                 <td>
                     {% if a['data_devolucao'] %}
-                        <span class="etiqueta etiqueta-devolvido">Devolvido em {{ a['data_devolucao']|data }}</span>
+                        <span class="etiqueta etiqueta-devolvido">Encerrado em {{ a['data_devolucao']|data }}</span>
+                    {% elif a['tipo'] == 'online' %}
+                        <span class="etiqueta etiqueta-ativo">Lendo online</span>
                     {% elif a['atrasado'] %}
                         <span class="etiqueta etiqueta-atrasado">Atrasado (+{{ a['multa']|moeda }})</span>
                     {% else %}
@@ -36,7 +39,7 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if not a['data_devolucao'] %}
+                    {% if not a['data_devolucao'] and a['tipo'] == 'loja' %}
                     <form method="post" action="{{ url_for('devolver', id_aluguel=a['id']) }}">
                         <button class="botao botao-pequeno" type="submit">Registrar devolução</button>
                     </form>
@@ -44,7 +47,7 @@
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="7" class="vazio">Nenhum aluguel por aqui.</td></tr>
+            <tr><td colspan="8" class="vazio">Nenhum aluguel por aqui.</td></tr>
             {% endfor %}
         </tbody>
     </table>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block titulo %}Parcerias - Livraria Entrelinhas{% endblock %}
+
+{% block conteudo %}
+<div class="ficha ficha-larga">
+    <div class="ficha-cabecalho">
+        <span>Livrarias e autores</span>
+        <h1>Seja nosso parceiro</h1>
+    </div>
+    <p>Tem uma livraria e quer trocar acervo ou dividir eventos? É autor e quer lançar seu livro com a gente?
+       Mande sua proposta que a nossa equipe responde por email.</p>
+    <form method="post" class="grade-form">
+        <label>Você é
+            <select name="tipo">
+                <option value="livraria" {% if form.get('tipo') == 'livraria' %}selected{% endif %}>Livraria</option>
+                <option value="autor" {% if form.get('tipo') == 'autor' %}selected{% endif %}>Autor(a)</option>
+            </select>
+        </label>
+        <label>Nome
+            <input type="text" name="nome" value="{{ form.get('nome', '') }}" required>
+        </label>
+        <label>Email
+            <input type="email" name="email" value="{{ form.get('email', '') }}" required>
+        </label>
+        <label>Telefone
+            <input type="text" name="telefone" value="{{ form.get('telefone', '') }}">
+        </label>
+        <label class="campo-inteiro">Cidade
+            <input type="text" name="cidade" value="{{ form.get('cidade', '') }}">
+        </label>
+        <label class="campo-inteiro">Proposta
+            <textarea name="proposta" rows="5" required>{{ form.get('proposta', '') }}</textarea>
+        </label>
+        <button class="botao botao-cheio campo-inteiro" type="submit">Enviar proposta</button>
+    </form>
+</div>
+{% endblock %}

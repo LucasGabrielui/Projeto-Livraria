@@ -27,6 +27,9 @@
             {% for r in resultados %}
             <tr>
                 <td>
+                    {% if r['capa'] %}
+                    <img class="capa-lista" src="https://covers.openlibrary.org/b/id/{{ r['capa'] }}-S.jpg" alt="" loading="lazy">
+                    {% endif %}
                     <strong>{{ r['titulo'] }}</strong>
                     {% if r['publico'] %}<span class="etiqueta etiqueta-ativo">domínio público</span>{% endif %}
                 </td>
@@ -38,6 +41,7 @@
                         <input type="hidden" name="titulo" value="{{ r['titulo'] }}">
                         <input type="hidden" name="autor" value="{{ r['autor'] }}">
                         <input type="hidden" name="ano" value="{{ r['ano'] or '' }}">
+                        <input type="hidden" name="capa" value="{{ r['capa'] or '' }}">
                         <input type="text" name="preco" placeholder="R$" size="7" required>
                         <input type="number" name="estoque" value="1" min="0" style="width: 4.5em" required>
                         <button class="botao botao-pequeno" type="submit">Adicionar</button>
