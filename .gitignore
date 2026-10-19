@@ -1,0 +1,20 @@
+# banco de dados e arquivos locais (nunca enviar pro GitHub)
+*.db
+*.db-journal
+*.sqlite3
+cookies.json
+
+# segredos
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

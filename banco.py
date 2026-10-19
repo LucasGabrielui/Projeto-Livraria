@@ -221,13 +221,8 @@ def criar_tabelas():
         livros = [l + (CAPAS.get(l[0]), 1 + i % 2, EBOOKS.get(l[0])) for i, l in enumerate(livros)]
         cur.executemany("INSERT INTO livros (titulo, autor, ano, preco, estoque, capa, fornecedor_id, ebook) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", livros)
 
-    # usuario padrao pra conseguir entrar a primeira vez
-    cur.execute("SELECT COUNT(*) FROM funcionarios")
-    if cur.fetchone()[0] == 0:
-        sal = secrets.token_hex(16)
-        cur.execute("INSERT INTO funcionarios (nome, cpf, cargo, usuario, senha, sal) VALUES (?, ?, ?, ?, ?, ?)",
-                    ("Administrador", "00000000000", "gerente", "admin", gerar_hash("admin", sal), sal))
-
+    # nao existe mais usuario padrao (admin/admin): o primeiro gerente
+    # e criado pela tela de primeiro acesso em /admin/primeiro-acesso
     con.commit()
     con.close()
 
@@ -364,6 +359,13 @@ def cadastrar_funcionario(nome, cpf, cargo, usuario, senha):
         ok = False
     con.close()
     return ok
+
+
+def existe_funcionario():
+    con = conectar()
+    total = con.execute("SELECT COUNT(*) FROM funcionarios").fetchone()[0]
+    con.close()
+    return total > 0
 
 
 def listar_funcionarios():

@@ -1,14 +1,18 @@
 import os
 import math
+import secrets
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import banco
 import busca_web
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "chave-da-livraria-trocar-em-producao")
+# sem a variavel SECRET_KEY, gera uma chave aleatoria a cada vez que o servidor sobe
+# (nesse caso todo mundo precisa entrar de novo depois de reiniciar)
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 
 CARGOS = ["vendedor", "estoquista", "gerente"]
+SENHA_MINIMA_FUNCIONARIO = 8
 
 
 def moeda(valor):
@@ -303,8 +307,37 @@ def parcerias():
 
 # area administrativa
 
+@app.route("/admin/primeiro-acesso", methods=["GET", "POST"])
+def primeiro_acesso():
+    # so funciona enquanto nenhum funcionario existir
+    if banco.existe_funcionario():
+        return redirect(url_for("admin_login"))
+    form = request.form
+    if request.method == "POST":
+        nome = form.get("nome", "").strip()
+        cpf = limpar_cpf(form.get("cpf", ""))
+        usuario = form.get("usuario", "").strip()
+        senha = form.get("senha", "")
+        if nome == "" or usuario == "" or senha == "":
+            flash("Nome, usuário e senha são obrigatórios.", "erro")
+        elif cpf is None:
+            flash("CPF inválido, precisa ter 11 dígitos.", "erro")
+        elif len(senha) < SENHA_MINIMA_FUNCIONARIO:
+            flash(f"A senha precisa ter pelo menos {SENHA_MINIMA_FUNCIONARIO} caracteres.", "erro")
+        elif senha != form.get("confirmar", ""):
+            flash("As senhas não conferem.", "erro")
+        elif banco.cadastrar_funcionario(nome, cpf, "gerente", usuario, senha):
+            flash("Gerente criado! Agora é só entrar.", "sucesso")
+            return redirect(url_for("admin_login"))
+        else:
+            flash("Não foi possível criar o gerente.", "erro")
+    return render_template("admin/primeiro_acesso.html", form=form)
+
+
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
+    if not banco.existe_funcionario():
+        return redirect(url_for("primeiro_acesso"))
     if request.method == "POST":
         usuario = request.form.get("usuario", "").strip()
         func = banco.login_funcionario(usuario, request.form.get("senha", ""))
@@ -466,6 +499,8 @@ def admin_funcionarios():
             flash("Nome, usuário e senha são obrigatórios.", "erro")
         elif cpf is None:
             flash("CPF inválido, precisa ter 11 dígitos.", "erro")
+        elif len(senha) < SENHA_MINIMA_FUNCIONARIO:
+            flash(f"A senha precisa ter pelo menos {SENHA_MINIMA_FUNCIONARIO} caracteres.", "erro")
         elif cargo not in CARGOS:
             flash("Cargo inválido.", "erro")
         elif banco.cadastrar_funcionario(nome, cpf, cargo, usuario, senha):
@@ -576,4 +611,5 @@ def status_parceria(id_parceria):
 banco.criar_tabelas()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # modo debug so liga se pedir: FLASK_DEBUG=1 python main.py
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")
